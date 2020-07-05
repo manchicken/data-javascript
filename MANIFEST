@@ -1,13 +1,19 @@
 CHANGES
-MANIFEST
-README
-TODO
+CONTRIBUTING.md
+example.pl
 JavaScript.pm
+LICENSE
+Makefile
 Makefile.PL
+MANIFEST			This list of files
+MANIFEST.SKIP
+MYMETA.json
+MYMETA.yml
+README.md
 t/1-load.t
 t/2-import.t
 t/3-js12.t
 t/3-noArgs.t
 t/3-undef.t
 t/4-escape.t
-example.pl
+TODO
