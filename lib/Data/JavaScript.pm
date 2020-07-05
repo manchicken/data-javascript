@@ -1,10 +1,10 @@
-package Data::JavaScript;
+package Data::JavaScript;    ## no critic (PodSpelling)
 
 use Modern::Perl;
 use Readonly;
 use Scalar::Util 'reftype';
 
-Readonly our $VERSION => q/1.13/;
+our $VERSION = q/1.13/;
 
 # Exporter
 Readonly our @EXPORT    => qw(jsdump hjsdump);
@@ -84,43 +84,52 @@ sub jsdump {
   return wantarray ? @res : join qq/\n/, @res, q//;
 }
 
-my $qm_ver;
-if ( $] < $MIN_ENCODE_REQUIRE_BREAKPOINT ) {
-  $qm_ver = <<'EO5';
-    s<([^ \x21-\x5B\x5D-\x7E]+)>{sprintf(join('', '\x%02X' x length$1), unpack'C*',$1)}ge;
-EO5
-}
-else {
-  $qm_ver = <<'EO58';
-    if( $opt{JS} >= 1.3 && Encode::is_utf8($_) ){
-        s<([\x{0080}-\x{fffd}]+)>{sprintf '\u%0*v4X', '\u', $1}ge;
+## RJEWKno critic (RequireCheckingReturnValueOfEval, RequireInterpolationOfMetachars, ProhibitStringyEval)
+sub __quotemeta {
+  my ($input) = @_;
+
+  ## ENCODER!
+  if ( $] < $MIN_ENCODE_REQUIRE_BREAKPOINT ) {
+    $input =~ s{
+      ([^ \x21-\x5B\x5D-\x7E]+)
+    }{
+      sprintf(join('', '\x%02X' x length$1), unpack'C*',$1)
+    }gexsm;
+  }
+  else {
+    if ( $opt{JS} >= $JSCOMPAT_DEFAULT_VERSION && Encode::is_utf8($input) ) {
+      $input =~ s{
+        ([\x{0080}-\x{fffd}]+)
+      }{
+        sprintf '\u%0*v4X', '\u', $1
+      }gexms;
     }
 
     {
       use bytes;
-      s<((?:[^ \x21-\x7E]|(?:\\(?!u)))+)>{sprintf '\x%0*v2X', '\x', $1}ge;
+      $input =~
+        s{
+          ((?:[^ \x21-\x7E]|(?:\\(?!u)))+)
+        }{
+          sprintf '\x%0*v2X', '\x', $1
+        }gexms;
     }
-EO58
-}
 
-## no critic (RequireCheckingReturnValueOfEval, RequireInterpolationOfMetachars, ProhibitStringyEval)
-eval 'sub __quotemeta {local $_ = shift;' . $qm_ver
-  . <<'EOQM';
-
-    #This is kind of ugly/inconsistent output for munged UTF-8
-    #tr won't work because we need the escaped \ for JS output
-    s/\\x09/\\t/g;
-    s/\\x0A/\\n/g;
-    s/\\x0D/\\r/g;
-    s/"/\\"/g;
-    s/\\x5C/\\\\/g;
-
-    #Escape </script> for stupid browsers that stop parsing
-    s%</script>%\\x3C\\x2Fscript\\x3E%g;
-
-    return $_;
   }
-EOQM
+
+  #This is kind of ugly/inconsistent output for munged UTF-8
+  #tr won't work because we need the escaped \ for JS output
+  $input =~ s/\\x09/\\t/gxms;
+  $input =~ s/\\x0A/\\n/gxms;
+  $input =~ s/\\x0D/\\r/gxms;
+  $input =~ s/"/\\"/gxms;
+  $input =~ s/\\x5C/\\\\/gxms;
+
+  #Escape </script> for stupid browsers that stop parsing
+  $input =~ s{</script>}{\\x3C\\x2Fscript\\x3E}gxms;
+
+  return $input;
+}
 
 sub __jsdump {
   my ( $sym, $elem, $dict, $undef ) = @_;
@@ -178,7 +187,7 @@ sub __jsdump {
 }
 
 1;
-## no critic (PodSpelling,RequirePodSections)
+## no critic (RequirePodSections)
 __END__
 
 =head1 NAME

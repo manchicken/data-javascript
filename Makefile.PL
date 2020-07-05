@@ -7,7 +7,7 @@ WriteMakefile(
   ABSTRACT_FROM => 'lib/Data/JavaScript.pm',
   LICENSE       => 'perl_5',
   PREREQ_PM =>
-    { 'Modern::Perl' => '0', 'Readonly' => '0', 'Scalar::Util' => '0','Eval::Safe' => '0' },
+    { 'Modern::Perl' => '0', 'Readonly' => '0', 'Scalar::Util' => '0' },
   TEST_REQUIRES => {
     'FindBin'                  => '0',
     'Test2::V0'                => '0',
