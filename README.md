@@ -1,7 +1,10 @@
+# Data::JavaScript
+
 Dump perl structures to JavaScript code.
 
-example.pl:
+`example.pl`:
 
+```perl
 use Data::JavaScript;
 
 $hash = {'string' => 'Joseph',
@@ -15,9 +18,11 @@ $hash = {'string' => 'Joseph',
 $hash->{'ref'} = $hash;
 
 print scalar(jsdump("facts", $hash, 31.4e-1));
+```
 
 Output:
-                        
+
+```js
 var facts = new Array;
 facts[0] = new Object;
 facts[0].xor = new Array;
@@ -65,3 +70,4 @@ facts[0].array[14] = 'e';
 facts[0].array[15] = 'f';
 facts[0].string = 'Joseph';
 facts[1] = 3.14;
+```
