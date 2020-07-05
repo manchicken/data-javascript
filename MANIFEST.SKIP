@@ -1,2 +1,21 @@
 \.vs.*?
 \.git.*?
+MYMETA.*
+\.travis\.yml
+^travis
+
+# Temp, old and emacs backup files.
+~$
+\.(old|bak)$
+^#.*#$
+^\.#
+\..+?\.swp$
+
+# Makemaker generated files and dirs.
+^MANIFEST\.
+^Makefile$
+^blib/
+^MakeMaker-\d
+.*\.bak
+
+Data-JavaScript-.*
