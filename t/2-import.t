@@ -1,25 +1,23 @@
-BEGIN { $| = 1; print "1..3\n"; }
+use Modern::Perl;
 
-#Test imports
+use Test2::V0;
+use Test2::Tools::Subtest qw/subtest_buffered/;
 
-{
-  package Fred;
-  use Data::JavaScript qw(:all);
-    
-  $_ = eval{ __quotemeta("Hello World\n") };
-  print 'not ' unless $_ eq 'Hello World\n';
-  print "ok 1 #$_\n";
-}
+use Data::JavaScript qw(:all);
 
-{
-  package Barney;
-  use Data::JavaScript qw(jsdump);
-  
-  $_ = eval{ __quotemeta("Hello World\n") } || '';
-  print 'not ' if $_ eq 'Hello World\n';
-  print "ok 2 #$_\n";
+subtest_buffered private_quotemeta => sub {
+  # We're verifying that a newline is quoted.
+  is
+    __quotemeta( "Hello World\n" ),
+    q/Hello World\n/, ## no critic (RequireInterpolationOfMetachars)
+    'Simple __quotemeta()';
+};
 
-  $_ = join('', jsdump('narf', 'Troz!'));
-  print 'not ' unless $_ eq 'var narf = "Troz!";';
-  print "ok 3 #$_\n";
-}
+subtest_buffered jsdump => sub {
+  is
+    join( q//, jsdump( 'narf', 'Troz!' ) ),
+    'var narf = "Troz!";',
+    'Simple jsdump()';
+};
+
+done_testing;

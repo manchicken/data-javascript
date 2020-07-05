@@ -1,3 +1,4 @@
+\.perl\w+rc
 \.vs.*?
 \.git.*?
 MYMETA.*

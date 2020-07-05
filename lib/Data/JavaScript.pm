@@ -1,80 +1,98 @@
 package Data::JavaScript;
-require 5;
-use vars qw(@EXPORT @EXPORT_OK %OPT $VERSION);
-%OPT = (JS=>1.3);
-$VERSION = 1.13;
 
-@EXPORT = qw(jsdump hjsdump);
-@EXPORT_OK = '__quotemeta';
+use Modern::Perl;
+use Readonly;
+use Scalar::Util 'reftype';
 
-use strict;
-require Encode unless $] < 5.007;
+Readonly our $VERSION => q/1.13/;
 
-sub import{
-  my $package = shift;
+# Exporter
+Readonly our @EXPORT    => qw(jsdump hjsdump);
+Readonly our @EXPORT_OK => '__quotemeta';
 
-  foreach( @_ ){
-    if(ref($_) eq 'HASH'){
-      $OPT{JS} = $$_{JS} if exists($$_{JS});
-      $OPT{UNDEF} = $$_{UNDEF} if exists($$_{UNDEF});
+# Magic numbers
+Readonly my $MIN_ENCODE_REQUIRE_BREAKPOINT => 5.007;
+Readonly my $JSCOMPAT_DEFAULT_VERSION      => 1.3;
+Readonly my $JSCOMPAT_UNDEFINED_MISSING    => 1.2;
+
+# This is a context variable which holds on to configs.
+my %opt = ( JS => $JSCOMPAT_DEFAULT_VERSION );  # TODO: This is super out-dated.
+
+if ( !$] < $MIN_ENCODE_REQUIRE_BREAKPOINT ) { require Encode; }
+
+sub import {
+  my ( $package, @args ) = @_;
+
+  foreach my $arg (@args) {
+    if ( ref($arg) eq 'HASH' ) {
+      if ( exists $arg->{JS} )    { $opt{JS}    = $arg->{JS}; }
+      if ( exists $arg->{UNDEF} ) { $opt{UNDEF} = $arg->{UNDEF}; }
     }
   }
-  $OPT{UNDEF} ||=  $OPT{JS} > 1.2 ? 'undefined' : q('');
+  $opt{UNDEF} ||= $opt{JS} > $JSCOMPAT_UNDEFINED_MISSING ? 'undefined' : q('');
 
   #use (); #imports nothing, as package is not supplied
-  if( defined $package ){
-    no strict 'refs';
+  if ( defined $package ) {
 
     #Remove options hash
-    my @import = grep { ! length ref } @_;
+    my @import = grep { !length ref } @args;
 
-    if( scalar @import ){
-      if( grep {/^:all$/} @import ){
-	@import = (@EXPORT, @EXPORT_OK) }
-      else{
-	#only user-specfied subset of @EXPORT, @EXPORT_OK
-	my $q = qr/@{[join('|', @EXPORT, @EXPORT_OK)]}/;
-	@import = grep { $_ =~ /$q/ } @import;
+    if ( scalar @import ) {
+      if ( scalar grep { /^:all$/xsm } @import ) {
+        @import = ( @EXPORT, @EXPORT_OK );
+      }
+      else {
+
+        #only user-specfied subset of @EXPORT, @EXPORT_OK
+        my $q = qr/@{[join('|', @EXPORT, @EXPORT_OK)]}/xsm;
+        @import = grep { /$q/xsm } @import;
       }
     }
-    else{
+    else {
       @import = @EXPORT;
     }
-    
+
     my $caller = caller;
+    no strict 'refs';    ## no critic (ProhibitNoStrict)
     for my $func (@import) {
-      *{"$caller\::$func"} = \&$func;
+      *{"$caller\::$func"} = \&{$func};
     }
+    use strict 'refs';
   }
+
+  return;
 }
 
 sub hjsdump {
-    my @res = (qq(<script type="text/javascript" language="JavaScript$OPT{JS}" />),
-	       '<!--', &jsdump(@_), '// -->', '</script>');
-    wantarray ? @res : join("\n", @res, "");
+  my @input = @_;
+
+  my @res = (
+    qq(<script type="text/javascript" language="JavaScript$opt{JS}" />),
+    '<!--', jsdump(@input), '// -->', '</script>',
+  );
+  return wantarray ? @res : join qq/\n/, @res, q//;
 }
 
 sub jsdump {
-    my $sym  = shift;
-    return "var $sym;\n" unless (@_);
-    my $elem  = shift;
-    my $undef = shift;
-    my %dict;
-    my @res   = __jsdump($sym, $elem, \%dict, $undef);
-    $res[0]   = "var " . $res[0];
-    wantarray ? @res : join("\n", @res, "");
+  my ( $sym, @input ) = @_;
+
+  return "var $sym;\n" if ( not scalar @input );
+  my ( $elem, $undef ) = @input;
+  my %dict = ();
+  my @res  = __jsdump( $sym, $elem, \%dict, $undef );
+  $res[0] = qq/var $res[0]/;
+  return wantarray ? @res : join qq/\n/, @res, q//;
 }
 
-
-my $QMver;
-if( $] < 5.007 ){
-  $QMver=<<'EO5';
+my $qm_ver;
+if ( $] < $MIN_ENCODE_REQUIRE_BREAKPOINT ) {
+  $qm_ver = <<'EO5';
     s<([^ \x21-\x5B\x5D-\x7E]+)>{sprintf(join('', '\x%02X' x length$1), unpack'C*',$1)}ge;
 EO5
 }
-else{
-  $QMver=<<'EO58';
-    if( $OPT{JS} >= 1.3 && Encode::is_utf8($_) ){
+else {
+  $qm_ver = <<'EO58';
+    if( $opt{JS} >= 1.3 && Encode::is_utf8($_) ){
         s<([\x{0080}-\x{fffd}]+)>{sprintf '\u%0*v4X', '\u', $1}ge;
     }
 
@@ -85,7 +103,9 @@ else{
 EO58
 }
 
-eval 'sub __quotemeta {local $_ = shift;' . $QMver . <<'EOQM';
+## no critic (RequireCheckingReturnValueOfEval, RequireInterpolationOfMetachars, ProhibitStringyEval)
+eval 'sub __quotemeta {local $_ = shift;' . $qm_ver
+  . <<'EOQM';
 
     #This is kind of ugly/inconsistent output for munged UTF-8
     #tr won't work because we need the escaped \ for JS output
@@ -102,61 +122,63 @@ eval 'sub __quotemeta {local $_ = shift;' . $QMver . <<'EOQM';
   }
 EOQM
 
-
 sub __jsdump {
-    my ($sym, $elem, $dict, $undef) = @_;
-    my $ref;
+  my ( $sym, $elem, $dict, $undef ) = @_;
+  my $ref = ref $elem;
 
-    unless( $ref = ref($elem) ){
-      unless( defined($elem) ){
-	return "$sym = @{[defined($undef) ? $undef : $OPT{UNDEF}]};";
+  if ( not $ref ) {
+    if ( not defined $elem ) {
+      return qq/$sym = @{[defined($undef) ? $undef : $opt{UNDEF}]};/;
+    }
+
+    #Translated from $Regexp::Common::RE{num}{real}
+    if ( $elem =~ /^[+-]?(?:(?=\d|[.])\d*(?:[.]\d{0,})?)$/xsm ) {
+
+      #                                                      (?:[eE][+-]?\d+)?
+      if ( $elem =~ /^0\d+$/xsm ) {
+        return qq/$sym = "$elem";/;
       }
-
-      #Translated from $Regexp::Common::RE{num}{real}
-      if( $elem =~ /^[+-]?(?:(?=\d|\.)\d*(?:\.\d{0,})?)$/ ){
-#                                                      (?:[eE][+-]?\d+)?
-	  return qq($sym = "$elem";) if $elem =~ /^0\d+$/;
-	  return "$sym = $elem;";
-      }
-
-      #Fall-back to quoted string
-      return qq($sym = ") . __quotemeta($elem) . '";';
+      return qq/$sym = $elem;/;
     }
 
-    #Circular references
-    if ($dict->{$elem}) {
-        return "$sym = " . $dict->{$elem} . ";";
-    }
-    $dict->{$elem} = $sym;
+    #Fall-back to quoted string
+    return qq/$sym = "/ . __quotemeta($elem) . q/";/;
+  }
 
-    #isa over ref in case we're given objects
-    if( $ref eq 'ARRAY' || UNIVERSAL::isa($elem, 'ARRAY') ){
-        my @list = ("$sym = new Array;");
-        my $n = 0;
-        foreach (@$elem) {
-            my $newsym = "$sym\[$n]";
-            push(@list, __jsdump($newsym, $_, $dict, $undef));
-            $n++;
-        }
-        return @list;
+  #Circular references
+  if ( $dict->{$elem} ) {
+    return qq/$sym = $dict->{$elem};/;
+  }
+  $dict->{$elem} = $sym;
+
+  #isa over ref in case we're given objects
+  if ( $ref eq 'ARRAY' || reftype $elem eq 'ARRAY' ) {
+    my @list = ("$sym = new Array;");
+    my $n    = 0;
+    foreach my $one ( @{$elem} ) {
+      my $newsym = "$sym\[$n]";
+      push @list, __jsdump( $newsym, $one, $dict, $undef );
+      $n++;
     }
-    elsif(  $ref eq 'HASH' || UNIVERSAL::isa($elem, 'HASH') ){
-        my @list = ("$sym = new Object;");
-        my ($k, $old_k, $v);
-        foreach $k (sort keys %$elem) {
-	  $k = __quotemeta($old_k=$k);
-	  my $newsym = qq($sym\["$k"]);
-	  push(@list, __jsdump($newsym, $elem->{$old_k}, $dict, $undef));
-        }
-        return @list;
+    return @list;
+  }
+  elsif ( $ref eq 'HASH' || reftype $elem eq 'HASH' ) {
+    my @list = ("$sym = new Object;");
+    foreach my $k ( sort keys %{$elem} ) {
+      my $old_k;
+      $k = __quotemeta( $old_k = $k );
+      my $newsym = qq($sym\["$k"]);
+      push @list, __jsdump( $newsym, $elem->{$old_k}, $dict, $undef );
     }
-    else{
-      return "//Unknown reference: $sym=$ref";
-    }
+    return @list;
+  }
+  else {
+    return "//Unknown reference: $sym=$ref";
+  }
 }
 
-
 1;
+## no critic (PodSpelling,RequirePodSections)
 __END__
 
 =head1 NAME

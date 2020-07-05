@@ -11,6 +11,8 @@ Your contributions are absolutely welcome!
 2. Make your changes
 3. Submit a PR to `main`.
 4. Make sure your PR mentions the issue you're resolving so that we can close issues.
+5. Please use `perltidy` with the `.perltidyrc` in this repository.
+6. Please use `perlcritic --harsh`
 
 ## When you're contributing, please observe our code quality standards (they're pretty light).
 
