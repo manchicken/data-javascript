@@ -13,6 +13,7 @@ WriteMakefile(
     'FindBin'                  => '0',
     'Test2::V0'                => '0',
     'Test2::Tools::PerlCritic' => '0',
+    'B::Debug'                 => '0',
   },
   META_MERGE => {
     'meta-spec' => { version => 2 },
