@@ -25,4 +25,3 @@ Your contributions are absolutely welcome!
 4. Please do not submit PRs which include massive formatting changes. Those are no fun to code review.
 
 Thank you for contributing!
-
