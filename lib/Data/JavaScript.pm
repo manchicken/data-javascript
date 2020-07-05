@@ -7,8 +7,12 @@ use Scalar::Util 'reftype';
 our $VERSION = q/1.13/;
 
 # Exporter
-Readonly our @EXPORT    => qw(jsdump hjsdump);
-Readonly our @EXPORT_OK => '__quotemeta';
+Readonly our @EXPORT      => qw(jsdump hjsdump);
+Readonly our @EXPORT_OK   => '__quotemeta';
+Readonly our %EXPORT_TAGS => (
+  all    => [ @EXPORT, @EXPORT_OK ],
+  compat => [@EXPORT],
+);
 
 # Magic numbers
 Readonly my $MIN_ENCODE_REQUIRE_BREAKPOINT => 5.007;
@@ -23,10 +27,18 @@ if ( !$] < $MIN_ENCODE_REQUIRE_BREAKPOINT ) { require Encode; }
 sub import {
   my ( $package, @args ) = @_;
 
-  foreach my $arg (@args) {
-    if ( ref($arg) eq 'HASH' ) {
+  # Let's get the stuff we're going to import
+  my @explicit_imports = ();
+  my @import           = ();
+  my %allowable        = map { $_ => 1 } ( @EXPORT, @EXPORT_OK );
+
+  for my $arg (@args) {
+    if ( ref $arg eq 'HASH' ) {
       if ( exists $arg->{JS} )    { $opt{JS}    = $arg->{JS}; }
       if ( exists $arg->{UNDEF} ) { $opt{UNDEF} = $arg->{UNDEF}; }
+    }
+    elsif ( not ref $arg ) {
+      push @explicit_imports, $arg;
     }
   }
   $opt{UNDEF} ||= $opt{JS} > $JSCOMPAT_UNDEFINED_MISSING ? 'undefined' : q('');
@@ -34,18 +46,26 @@ sub import {
   #use (); #imports nothing, as package is not supplied
   if ( defined $package ) {
 
-    #Remove options hash
-    my @import = grep { !length ref } @args;
+    if ( scalar @explicit_imports ) {
 
-    if ( scalar @import ) {
-      if ( scalar grep { /^:all$/xsm } @import ) {
-        @import = ( @EXPORT, @EXPORT_OK );
-      }
-      else {
+      # Run through the explicitly exported symbols
+      for my $explicit_import (@explicit_imports) {
 
-        #only user-specfied subset of @EXPORT, @EXPORT_OK
-        my $q = qr/@{[join('|', @EXPORT, @EXPORT_OK)]}/xsm;
-        @import = grep { /$q/xsm } @import;
+        # Looks like a tag
+        if ( substr( $explicit_import, 0, 1 ) eq q/:/ ) {
+          my $tag = substr $explicit_import, 1;
+
+          # Only do things for the actually exported tags.
+          if ( not exists $EXPORT_TAGS{$tag} ) { next; }
+          push @import, @{ $EXPORT_TAGS{$tag} };
+        }
+
+        # Not a tag
+        elsif ( exists $allowable{$explicit_import} ) {
+
+          #only user-specfied subset of @EXPORT, @EXPORT_OK
+          push @import, $explicit_import;
+        }
       }
     }
     else {
@@ -107,8 +127,7 @@ sub __quotemeta {
 
     {
       use bytes;
-      $input =~
-        s{
+      $input =~ s{
           ((?:[^ \x21-\x7E]|(?:\\(?!u)))+)
         }{
           sprintf '\x%0*v2X', '\x', $1

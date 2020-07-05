@@ -1,3 +1,5 @@
+#!/usr/bin/env perl
+
 use Modern::Perl;
 
 use Test2::V0;
