@@ -1,5 +1,8 @@
 # Data::JavaScript
 
+[![Coverage Status](https://coveralls.io/repos/github/manchicken/data-javascript/badge.svg?branch=main)](https://coveralls.io/github/manchicken/data-javascript?branch=main)
+[![Build Status](https://travis-ci.org/manchicken/data-javascript.svg?branch=main)](https://travis-ci.org/manchicken/data-javascript)
+
 Dump perl structures to JavaScript code.
 
 `example.pl`:
