@@ -1,4 +1,16 @@
+use strict;
+use warnings;
 use ExtUtils::MakeMaker;
+
+my %TEST_REQUIRES = (
+  'Devel::Cover' => '0',
+  'FindBin'      => '0',
+  'Test2::V0'    => '0',
+);
+
+if ( $] >= 5.020 ) {
+  $TEST_REQUIRES{'Test2::Tools::PerlCritic'} = '0';
+}
 
 WriteMakefile(
   NAME          => 'Data::JavaScript',
@@ -8,13 +20,8 @@ WriteMakefile(
   LICENSE       => 'perl_5',
   PREREQ_PM =>
     { 'Modern::Perl' => '0', 'Readonly' => '0', 'Scalar::Util' => '0' },
-  TEST_REQUIRES => {
-    'Devel::Cover'             => '0',
-    'FindBin'                  => '0',
-    'Test2::V0'                => '0',
-    'Test2::Tools::PerlCritic' => '0',
-  },
-  META_MERGE => {
+  TEST_REQUIRES => \%TEST_REQUIRES,
+  META_MERGE    => {
     'meta-spec' => { version => 2 },
     'x_contributors' =>
       [ 'Jerrad Pierce <jpierce@cpan.org>', 'Ariel Brosh <schop cpan.org>', ],
