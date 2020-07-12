@@ -10,7 +10,8 @@ cd $(perl -MCPAN::Meta -e '$m = CPAN::Meta->load_file("MYMETA.yml"); print $m->n
 
 export PERL5LIB="./blib/lib:./blib/arch:$PERL5LIB"
 perl Makefile.PL
-cover -make "make TEST_VERBOSE=1" -test test
-prove -MDevel::Cover -v  t/
+make test
+cover -make "make TEST_VERBOSE=1" -report coveralls -test test
+# prove -MDevel::Cover -v  t/
 
-cover -report coveralls
+# cover -test -report coveralls
