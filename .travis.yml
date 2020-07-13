@@ -18,7 +18,7 @@ os:
   - linux
   - osx
 osx_image:
-  - "xcode11.3"
+  - "xcode11.0"
 before_install:
   - $TRAVIS_BUILD_DIR/travis/before_install
 script:
