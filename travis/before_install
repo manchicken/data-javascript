@@ -3,7 +3,8 @@
 . "$(dirname $0)/util.sh"
 
 if [ $is_osx ]; then
-    brew install cpanminus
+    # I believe Travis does this for us now!
+    # brew install cpanminus
 fi
 
 cpanm -n Devel::Cover Devel::Cover::Report::Coveralls CPAN::Meta JSON LWP::UserAgent
