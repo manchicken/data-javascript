@@ -28,8 +28,7 @@ jobs:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
       - run: perl -V
       - run: cpanm --installdeps .
-      - run: PERL5OPT=-MDevel::Cover make test
-      - run: cover ./t
+      - run: cover -test
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
