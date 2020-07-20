@@ -3,6 +3,7 @@ use warnings;
 use ExtUtils::MakeMaker;
 
 my %TEST_REQUIRES = (
+  'Devel::Cover::Report::Coveralls' => '0',
   'Devel::Cover' => '0',
   'FindBin'      => '0',
   'Test2::V0'    => '0',
