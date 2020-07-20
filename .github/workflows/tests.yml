@@ -29,6 +29,7 @@ jobs:
       - run: perl -V
       - run: cpanm --installdeps .
       - run: PERL5OPT=-MDevel::Cover make test
+      - run: cover ./t
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
