@@ -29,7 +29,7 @@ jobs:
       - run: perl -V
       - run: cpanm --installdeps .
       - run: make test
-      - run: cover -test
+      - run: cover -test -report coveralls
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
