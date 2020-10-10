@@ -20,3 +20,11 @@ MYMETA.*
 .*\.bak
 
 Data-JavaScript-.*
+
+tags
+.*?\.swp
+\.DS_Store
+
+cover_db
+
+\.circleci
