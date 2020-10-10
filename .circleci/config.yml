@@ -11,9 +11,9 @@ workflows:
   main:
     jobs:
       - perl/build:
-        codecov: true
-        save-to-artifacts: true
-        save-to-workspace: true
+          codecov: true
+          save-to-artifacts: true
+          save-to-workspace: true
       - perl/test-linux:
         matrix:
           parameters:
