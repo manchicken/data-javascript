@@ -11,7 +11,7 @@ workflows:
   main:
     jobs:
       - perl/build:
-          codecov: true
+          codecov: false
           save-to-artifacts: false
           save-to-workspace: true
       - perl/test-linux:
