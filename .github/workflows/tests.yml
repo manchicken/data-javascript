@@ -26,7 +26,9 @@ jobs:
           perl-version: ${{ matrix.perl }}
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+          GITHUB_ACTIONS: 1
       - run: perl -V
+      - run: env
       - run: cpanm --installdeps .
       - run: make test
       - run: cover -test -report coveralls
