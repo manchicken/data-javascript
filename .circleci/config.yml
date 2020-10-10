@@ -4,18 +4,20 @@ version: 2.1
 orbs:
   # Declare a dependency on the welcome-orb
   perl: circleci/perl@1.0.0
+
 # Orchestrate or schedule a set of jobs
 workflows:
   # Main workflow
   main:
-    - perl/build:
-      codecov: true
-      save-to-artifacts: true
-      save-to-workspace: true
-    - perl/test-linux:
-      matrix:
-        parameters:
-          perl-version:
-            - '5.28'
-            - '5.30'
-            - '5.32'
+    jobs:
+      - perl/build:
+        codecov: true
+        save-to-artifacts: true
+        save-to-workspace: true
+      - perl/test-linux:
+        matrix:
+          parameters:
+            perl-version:
+              - '5.28'
+              - '5.30'
+              - '5.32'
