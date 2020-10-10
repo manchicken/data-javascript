@@ -31,10 +31,8 @@ jobs:
       - name: Run Tests
         run: make test
 
-      - name: Run Everything
+      - name: Publish to coveralls
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
           GITHUB_ACTIONS: 1
-        run: |
-          make test
-          cover -test -report coveralls
+        run: cover -test -report coveralls
