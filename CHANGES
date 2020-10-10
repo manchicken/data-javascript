@@ -1,6 +1,6 @@
 Revision history for Perl extension Data::JavaScript.
 
-1.14.0  Fri Oct 8 23:33:20 EDT 2020
+1.14  Fri Oct 8 23:33:20 EDT 2020
   - Modernized codebase
   - Added CI
 

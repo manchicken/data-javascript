@@ -4,7 +4,7 @@ use Modern::Perl;
 use Readonly;
 use Scalar::Util 'reftype';
 
-our $VERSION = q/1.14.0/;
+our $VERSION = q/1.14/;
 
 # Exporter
 Readonly our @EXPORT      => qw(jsdump hjsdump);
