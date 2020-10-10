@@ -15,9 +15,10 @@ workflows:
           save-to-artifacts: false
           save-to-workspace: true
       - perl/test-linux:
-        matrix:
-          parameters:
-            perl-version:
-              - '5.28'
-              - '5.30'
-              - '5.32'
+          requires: [perl/build]
+          matrix:
+            parameters:
+              perl-version:
+                - '5.28'
+                - '5.30'
+                - '5.32'
