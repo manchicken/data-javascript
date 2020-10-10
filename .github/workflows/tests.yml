@@ -25,15 +25,16 @@ jobs:
         with:
           perl-version: ${{ matrix.perl }}
       - name: Run Everything
-        env:
+          env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
           GITHUB_ACTIONS: 1
-        run: perl -V
-        run: env
-        run: cpanm --installdeps .
-        run: make test
-        run: cover -test -report coveralls
-      - name: Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          perl -V
+          env
+          cpanm --installdeps .
+          make test
+          cover -test -report coveralls
+#      - name: Coveralls
+#        uses: coverallsapp/github-action@master
+#        with:
+#          github-token: ${{ secrets.GITHUB_TOKEN }}
