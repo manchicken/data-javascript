@@ -35,51 +35,47 @@ sub import {
   # This is the madness for the JS version
   for my $arg (@args) {
     if ( ref $arg eq 'HASH' ) {
-      if ( exists $arg->{JS} )    { $opt{JS}    = $arg->{JS}; }
-      if ( exists $arg->{UNDEF} ) { $opt{UNDEF} = $arg->{UNDEF}; }
+      %opt = ( %opt, map { $_ => $arg->{$_} } keys %{$arg} );
     }
     elsif ( not ref $arg ) {
       push @explicit_imports, $arg;
     }
   }
-  $opt{UNDEF} ||= $opt{JS} > $JSCOMPAT_UNDEFINED_MISSING ? 'undefined' : q('');
+  $opt{UNDEF} ||=
+    ( $opt{JS} > $JSCOMPAT_UNDEFINED_MISSING ) ? 'undefined' : q('');
 
-  #use (); #imports nothing, as package is not supplied
-  if ( defined $package ) {
+  if ( scalar @explicit_imports ) {
 
-    if ( scalar @explicit_imports ) {
+    # Run through the explicitly exported symbols
+    for my $explicit_import (@explicit_imports) {
 
-      # Run through the explicitly exported symbols
-      for my $explicit_import (@explicit_imports) {
+      # Looks like a tag
+      if ( substr( $explicit_import, 0, 1 ) eq q/:/ ) {
+        my $tag = substr $explicit_import, 1;
 
-        # Looks like a tag
-        if ( substr( $explicit_import, 0, 1 ) eq q/:/ ) {
-          my $tag = substr $explicit_import, 1;
+        # Only do things for the actually exported tags.
+        if ( not exists $EXPORT_TAGS{$tag} ) { next; }
+        push @import, @{ $EXPORT_TAGS{$tag} };
+      }
 
-          # Only do things for the actually exported tags.
-          if ( not exists $EXPORT_TAGS{$tag} ) { next; }
-          push @import, @{ $EXPORT_TAGS{$tag} };
-        }
+      # Not a tag
+      elsif ( exists $allowable{$explicit_import} ) {
 
-        # Not a tag
-        elsif ( exists $allowable{$explicit_import} ) {
-
-          #only user-specfied subset of @EXPORT, @EXPORT_OK
-          push @import, $explicit_import;
-        }
+        #only user-specfied subset of @EXPORT, @EXPORT_OK
+        push @import, $explicit_import;
       }
     }
-    else {
-      @import = @EXPORT;
-    }
-
-    my $caller = caller;
-    no strict 'refs';    ## no critic (ProhibitNoStrict)
-    for my $func (@import) {
-      *{"$caller\::$func"} = \&{$func};
-    }
-    use strict 'refs';
   }
+  else {
+    @import = @EXPORT;
+  }
+
+  my $caller = caller;
+  no strict 'refs';    ## no critic (ProhibitNoStrict)
+  for my $func (@import) {
+    *{"$caller\::$func"} = \&{$func};
+  }
+  use strict 'refs';
 
   return;
 }
@@ -207,6 +203,7 @@ sub __jsdump {
 
 1;
 ## no critic (RequirePodSections)
+
 __END__
 
 =head1 NAME
